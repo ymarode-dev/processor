@@ -2,7 +2,7 @@ from fastapi import APIRouter, status, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi.exceptions import HTTPException
 from .schemas import PropertyRead, PropertyCreate, PropertyUpdate
-from CE.connections.sqlite import get_core_session
+from connections.sqlite import get_core_session
 from .service import PropertyService   
 
 property_router = APIRouter()

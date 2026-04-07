@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import event
 from typing import AsyncGenerator
-from CE.config import settings
+from config import settings
 
 core_engine = create_async_engine(settings.CORE_DATABASE_URL, echo=True)
 pc_engine = create_async_engine(settings.PC_DATABASE_URL, echo=True)
@@ -25,12 +25,12 @@ pc_session_maker = sessionmaker(pc_engine, class_=AsyncSession, expire_on_commit
 
 async def init_core_db() -> None:
     async with core_engine.begin() as conn:
-        from CE.models import core
+        from models import core
         await conn.run_sync(SQLModel.metadata.create_all)
 
 async def init_pc_db() -> None:
     async with pc_engine.begin() as conn:
-        from CE.models import pc
+        from models import pc
         await conn.run_sync(SQLModel.metadata.create_all)
 
 async def get_core_session() -> AsyncGenerator[AsyncSession, None]:

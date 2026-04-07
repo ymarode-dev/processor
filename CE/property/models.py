@@ -2,7 +2,7 @@ from sqlmodel import SQLModel, Field, Relationship
 from datetime import datetime
 from typing import List
 import uuid
-from CE.floor.models import Floor
+from floor.models import Floor
 
 class Property(SQLModel, table=True):
     __tablename__ = "property"

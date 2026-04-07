@@ -2,8 +2,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from .models import Devices
 from .schemas import DeviceCreate, DeviceUpdate, DeviceRead
 from typing import List
-from CE.utils.service import BaseService
-from CE.connections.redis import RedisClient
+from utils.service import BaseService
+from connections.redis import RedisClient
 import uuid
 
 class DeviceService:

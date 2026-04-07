@@ -2,9 +2,9 @@ from fastapi import APIRouter, status, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi.exceptions import HTTPException
 from .schemas import DeviceRead, DeviceCreate, DeviceUpdate, DeviceFilter
-from CE.connections.sqlite import get_core_session
+from connections.sqlite import get_core_session
 from .service import DeviceService   
-from CE.connections.redis import RedisClientRegistry
+from connections.redis import RedisClientRegistry
 from typing import List
 
 device_router = APIRouter()

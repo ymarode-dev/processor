@@ -5,7 +5,7 @@ from datetime import datetime
 from fastapi import HTTPException
 from sqlalchemy.sql.sqltypes import Integer, Float, Boolean, DateTime, String
 from sqlmodel import SQLModel
-from CE.connections.redis import RedisClient, RedisClientRegistry
+from connections.redis import RedisClient
 import json
 
 class BaseService:

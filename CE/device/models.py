@@ -2,7 +2,7 @@ from sqlmodel import Relationship, SQLModel, Field
 from datetime import datetime
 from typing import Optional
 import uuid
-from CE.room.models import Room
+from room.models import Room
 
 class Devices(SQLModel, table=True):
     __tablename__ = "devices"

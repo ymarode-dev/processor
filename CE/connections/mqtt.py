@@ -4,8 +4,8 @@ import logging
 from aiomqtt import Client, MqttError, Will
 from typing import List
 from datetime import datetime
-from CE.config import settings
-from CE.mqtt_invoker import MqttInvoker
+from config import settings
+from mqtt_invoker import MqttInvoker
 
 class MqttClient:
     _logger = logging.getLogger("MqttClient")
@@ -151,8 +151,8 @@ async def init_mqtt():
     hub = MqttClient(
         broker=settings.MQTT_HOST,
         port=settings.MQTT_PORT,
-        # username=settings.MQTT_USERNAME,
-        # password=settings.MQTT_PASSWORD,
+        username=settings.MQTT_USERNAME,
+        password=settings.MQTT_PASSWORD,
         client_id="edgeProcessorHub",
         topics=[
             ("processor/health/hub", 1),
@@ -162,8 +162,8 @@ async def init_mqtt():
     control = MqttClient(
         broker=settings.MQTT_HOST,
         port=settings.MQTT_PORT,
-        # username=settings.MQTT_USERNAME,
-        # password=settings.MQTT_PASSWORD,
+        username=settings.MQTT_USERNAME,
+        password=settings.MQTT_PASSWORD,
         client_id="edgeProcessorControl",
         topics=[
             ("processor/health/control", 1),

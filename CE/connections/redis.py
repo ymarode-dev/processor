@@ -1,5 +1,5 @@
 import redis.asyncio as redis
-from CE.config import settings
+from config import settings
 import json
 
 class RedisClient:

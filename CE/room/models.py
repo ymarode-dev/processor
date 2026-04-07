@@ -4,8 +4,8 @@ from typing import List, Optional, TYPE_CHECKING
 import uuid
 
 if TYPE_CHECKING:
-    from CE.device.models import Devices
-    from CE.floor.models import Floor
+    from device.models import Devices
+    from floor.models import Floor
 
 class Room(SQLModel, table=True):
     __tablename__ = "room"

@@ -1,0 +1,186 @@
+# logging.yaml
+version: 1
+disable_existing_loggers: true
+
+formatters:
+  simple:
+    format: '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+  standard:
+    format: '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+  request:
+    format: '%(asctime)s - %(name)s - %(message)s'
+  error:
+    format: '%(levelname)s <PID %(process)d:%(processName)s> %(name)s.%(funcName)s(): %(message)s'
+
+filters:
+  infoFilter:
+    (): logger.filters.InfoFilter
+  errorFilter:
+    (): logger.filters.ErrorFilter
+  debugFilter:
+    (): logger.filters.DebugFilter
+  warnFilter:
+    (): logger.filters.WarnFilter
+  traceFilter:
+    (): logger.filters.TraceFilter
+  responseFilter:
+    (): logger.filters.ResponseFilter
+  pcFilter:
+    (): logger.filters.PCFilter
+  dbtraceFilter:
+    (): logger.filters.DBTraceFilter
+  scheduleFilter:
+    (): logger.filters.ScheduleFilter
+  pytestFilter:
+    (): logger.filters.PytestFilter
+  aqiFilter:
+    (): logger.filters.AQIFilter
+
+handlers:
+  console:
+    class: logging.StreamHandler
+    level: DEBUG
+    formatter: standard
+    stream: ext://sys.stdout
+
+  info_file_handler:
+    class: logging.handlers.RotatingFileHandler
+    level: INFO
+    formatter: standard
+    filename: conf/logs/soul_py/py_info.log
+    maxBytes: 16777216
+    backupCount: 8
+    filters: [infoFilter]
+    encoding: utf8
+
+  error_file_handler:
+    class: logging.handlers.RotatingFileHandler
+    level: ERROR
+    formatter: standard
+    filename: conf/logs/soul_py/py_errors.log
+    maxBytes: 16777216
+    backupCount: 8
+    filters: [errorFilter]
+    encoding: utf8
+
+  debug_file_handler:
+    class: logging.handlers.RotatingFileHandler
+    level: DEBUG
+    formatter: standard
+    filename: conf/logs/soul_py/py_debug.log
+    maxBytes: 16777216
+    backupCount: 8
+    filters: [debugFilter]
+    encoding: utf8
+
+  warn_file_handler:
+    class: logging.handlers.RotatingFileHandler
+    level: WARN
+    formatter: standard
+    filename: conf/logs/soul_py/py_warn.log
+    maxBytes: 16777216
+    backupCount: 8
+    filters: [warnFilter]
+    encoding: utf8
+
+  trace_file_handler:
+    class: logging.handlers.RotatingFileHandler
+    level: 9
+    formatter: request
+    filename: conf/logs/soul_py/py_trace.log
+    maxBytes: 16777216
+    backupCount: 8
+    filters: [traceFilter]
+    encoding: utf8
+
+  responses_file_handler:
+    class: logging.handlers.RotatingFileHandler
+    level: 15
+    formatter: request
+    filename: conf/logs/soul_py/py_responses.log
+    maxBytes: 16777216
+    backupCount: 8
+    filters: [responseFilter]
+    encoding: utf8
+
+  dbtrace_file_handler:
+    class: logging.handlers.RotatingFileHandler
+    level: 24
+    formatter: request
+    filename: conf/logs/soul_py/py_dbtrace.log
+    maxBytes: 16777216
+    backupCount: 8
+    filters: [dbtraceFilter]
+    encoding: utf8
+
+  pc_file_handler:
+    class: logging.handlers.RotatingFileHandler
+    level: 14
+    formatter: request
+    filename: conf/logs/soul_py/py_pc.log
+    maxBytes: 16777216
+    backupCount: 8
+    filters: [pcFilter]
+    encoding: utf8
+  
+  schedule_file_handler:
+    class: logging.handlers.RotatingFileHandler
+    level: 26
+    formatter: request
+    filename: conf/logs/soul_py/py_schedule.log
+    maxBytes: 16777216
+    backupCount: 8
+    filters: [scheduleFilter]
+    encoding: utf8
+  
+  pytest_file_handler:
+    class: logging.handlers.RotatingFileHandler
+    level: 27
+    formatter: request
+    filename: conf/logs/soul_py/py_pytest.log
+    maxBytes: 16777216
+    backupCount: 8
+    filters: [pytestFilter]
+    encoding: utf8
+
+  aqi_file_handler:
+    class: logging.handlers.RotatingFileHandler
+    level: 28
+    formatter: request
+    filename: conf/logs/soul_py/py_aqi.log
+    maxBytes: 16777216
+    backupCount: 8
+    filters: [aqiFilter]
+    encoding: utf8
+
+loggers:
+  simpleExample:
+    level: 9
+    handlers:
+      - info_file_handler
+      - error_file_handler
+      - debug_file_handler
+      - trace_file_handler
+      - warn_file_handler
+      - responses_file_handler
+      - dbtrace_file_handler 
+      - pc_file_handler
+      - schedule_file_handler
+      - pytest_file_handler
+      - aqi_file_handler
+    propagate: no
+
+root:
+  level: 9
+  handlers:
+    - info_file_handler
+    - error_file_handler
+    - debug_file_handler
+    - trace_file_handler
+    - warn_file_handler
+    - responses_file_handler
+    - dbtrace_file_handler 
+    - pc_file_handler
+    - schedule_file_handler
+    - pytest_file_handler
+    - aqi_file_handler
