@@ -1,48 +1,47 @@
 from datetime import datetime
+import uuid
 from sqlalchemy.ext.asyncio import AsyncSession
+from connections.redis import RedisClient
+from utils.service import BaseService
 from .models import Property
 from .schemas import PropertyCreate, PropertyUpdate, PropertyRead
-from sqlmodel import select
-from typing import Optional
+from typing import List
 
 class PropertyService:
-    async def get_property(self, session: AsyncSession) -> PropertyRead:
-        result = await session.execute(select(Property))
-        property = result.scalars().first()
-        return property
+    def __init__(self):
+        self.base: BaseService = BaseService(Property)
 
-    async def create_property(self, session: AsyncSession, property_data: PropertyCreate) -> PropertyRead:
-        property_data_dict = property_data.model_dump()
-        new_property = Property(**property_data_dict)
-        new_property.TARGET = f"/{new_property.PROPERTY_ID}"
-        session.add(new_property)
-        await session.commit()
-        await session.refresh(new_property)
-        return new_property
+    async def get_property(self, session: AsyncSession, filters: dict, redis_client: RedisClient) -> List[PropertyRead]:
+        return await self.base.get(session, filters, redis_client)
+    
+    async def create_property(self, session: AsyncSession, property_data: List[PropertyCreate], redis_client: RedisClient) -> List[PropertyRead]:
+        data = []
 
-    async def update_property(self, session: AsyncSession, property_data: PropertyUpdate) -> Optional[PropertyRead]:
-        property_to_update = await self.get_property(session)
+        for property in property_data:
+            d = property.model_dump()  
+            d['PROPERTY_ID'] = f"ID{uuid.uuid4()}"  
+            d['TARGET'] = f"/{d['PROPERTY_ID']}" 
+            data.append(d)
 
-        if not property_to_update:
+        return await self.base.create(session, data, redis_client)
+
+    async def update_property(self, session: AsyncSession, filters: dict, property_data: PropertyUpdate, redis_client: RedisClient) -> List[PropertyRead] | None:
+        updated_count = await self.base.update(
+            session,
+            filters,
+            property_data.model_dump(exclude_unset=True)
+        )
+
+        if updated_count == 0:
             return None
 
-        property_data_dict = property_data.model_dump(exclude_unset=True)
+        return await self.base.get(session, filters, redis_client)
 
-        for key, value in property_data_dict.items():
-            setattr(property_to_update, key, value)
+    async def delete_property(self, session: AsyncSession, filters: dict, redis_client: RedisClient) -> List[PropertyRead] | None:
+        properties = await self.base.get(session, filters, redis_client)
 
-        property_to_update.UPDATED_AT = datetime.utcnow()
+        if not properties:
+            return None
 
-        await session.commit()
-        await session.refresh(property_to_update)
-        return property_to_update
-
-    async def delete_property(self, session: AsyncSession) -> bool:
-        property_to_delete = await self.get_property(session)
-
-        if not property_to_delete:
-            return False
-
-        await session.delete(property_to_delete)
-        await session.commit()
-        return True
+        await self.base.delete(session, filters, redis_client)
+        return properties

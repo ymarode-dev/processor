@@ -1,62 +1,47 @@
 from datetime import datetime
+import uuid
 from sqlalchemy.ext.asyncio import AsyncSession
+from connections.redis import RedisClient
 from .models import Room
 from .schemas import RoomCreate, RoomUpdate, RoomRead
-from sqlmodel import delete, select
+from utils.service import BaseService
 from typing import List, Optional
 
 class RoomService:
-    async def get_all_room(self, session: AsyncSession) -> List[RoomRead]:
-        result = await session.execute(select(Room))
-        room = result.scalars().all()
-        return room
+    def __init__(self):
+        self.base: BaseService = BaseService(Room)
 
-    async def get_room_by_id(self, session: AsyncSession, room_id: str) -> Optional[RoomRead]:
-        result = await session.execute(select(Room).where(Room.ROOM_ID == room_id))
-        room = result.scalars().first()
-        return room
+    async def get_rooms(self, session: AsyncSession, filters: dict, redis_client: RedisClient) -> List[RoomRead]:
+        return await self.base.get(session, filters, redis_client)
 
-    async def create_room(self, session: AsyncSession, room_data: List[RoomCreate]) -> List[RoomRead]:
-        new_rooms = []
+    async def create_room(self, session: AsyncSession, room_data: List[RoomCreate], redis_client: RedisClient) -> List[RoomRead]:
+        data = []
+
         for room in room_data:
-            room_dict = room.model_dump()
-            new_room = Room(**room_dict)
-            new_room.TARGET = f"/{new_room.TARGET}/{new_room.ROOM_ID}"
-            session.add(new_room)
-            new_rooms.append(new_room)
+            d = room.model_dump()
+            d['ROOM_ID'] = f"ID{uuid.uuid4()}"
+            d['TARGET'] = f"/{d['TARGET']}/{d['ROOM_ID']}"
+            data.append(d)
 
-        await session.commit()
+        return await self.base.create(session, data, redis_client)
 
-        for new_room in new_rooms:
-            await session.refresh(new_room)
+    async def update_room(self, session: AsyncSession, filters: dict, room_data: RoomUpdate, redis_client: RedisClient) -> List[RoomRead] | None:
+        updated_count = await self.base.update(
+            session,
+            filters,
+            room_data.model_dump(exclude_unset=True)
+        )
 
-        return new_rooms
-
-    async def update_room(self, session: AsyncSession, room_id: str, room_data: RoomUpdate) -> Optional[RoomRead]:
-        room = await self.get_room_by_id(session, room_id)
-        if not room:
+        if updated_count == 0:
             return None
 
-        room_data_dict = room_data.model_dump(exclude_unset=True)
-        for key, value in room_data_dict.items():
-            setattr(room, key, value)
+        return await self.base.get(session, filters, redis_client)
 
-        room.UPDATED_AT = datetime.utcnow()
-        await session.commit()
-        await session.refresh(room)
-        return room
+    async def delete_room(self, session: AsyncSession, filters: dict, redis_client: RedisClient) -> List[RoomRead] | None:
+        rooms = await self.base.get(session, filters, redis_client)
 
-    async def delete_room(self, session: AsyncSession, room_id: str) -> Optional[RoomRead]:
-        room = await self.get_room_by_id(session, room_id)
-        if not room:
+        if not rooms:
             return None
 
-        await session.delete(room)
-        await session.commit()
-        return room
-
-    async def delete_all_room(self, session: AsyncSession) -> List[RoomRead]:
-        rooms = await self.get_all_room(session)
-        await session.execute(delete(Room))
-        await session.commit()    
+        await self.base.delete(session, filters, redis_client)
         return rooms

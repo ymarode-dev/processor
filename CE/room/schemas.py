@@ -68,3 +68,8 @@ class RoomUpdate(BaseModel):
     INTERFACE_ID: Optional[str] = None
     INDEX_NO: Optional[str] = None
     CUSTOM_USER_NAME: Optional[str] = None
+
+class RoomFilter(BaseModel):
+    ROOM_ID: Optional[str] = None
+    TARGET: Optional[str] = None
+    FLOOR_ID: Optional[str] = None

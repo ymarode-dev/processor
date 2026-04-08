@@ -70,3 +70,7 @@ class PropertyUpdate(BaseModel):
     orgTitle: Optional[str] = None
     isRestored: Optional[int] = None
     CML_CATEGORY: Optional[str] = None
+
+class PropertyFilter(BaseModel):
+    PROPERTY_ID: Optional[str] = None
+    TARGET: Optional[str] = None

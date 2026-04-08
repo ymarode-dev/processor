@@ -24,7 +24,7 @@ class DeviceService:
 
         return await self.base.create(session, data, redis_client)
 
-    async def update_device(self, session: AsyncSession, filters: dict, device_data: DeviceUpdate, redis_client: RedisClient) -> List[DeviceRead]:
+    async def update_device(self, session: AsyncSession, filters: dict, device_data: DeviceUpdate, redis_client: RedisClient) -> List[DeviceRead] | None:
         updated_count = await self.base.update(
             session,
             filters,
@@ -36,7 +36,7 @@ class DeviceService:
 
         return await self.base.get(session, filters, redis_client)
 
-    async def delete_device(self, session: AsyncSession, filters: dict, redis_client: RedisClient) -> List[DeviceRead]:
+    async def delete_device(self, session: AsyncSession, filters: dict, redis_client: RedisClient) -> List[DeviceRead] | None:
         devices = await self.base.get(session, filters, redis_client)
 
         if not devices:

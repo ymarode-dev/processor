@@ -3,6 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update, delete, and_
 from datetime import datetime
 from fastapi import HTTPException
+from fastapi.encoders import jsonable_encoder
 from sqlalchemy.sql.sqltypes import Integer, Float, Boolean, DateTime, String
 from sqlmodel import SQLModel
 from connections.redis import RedisClient
@@ -14,10 +15,11 @@ class BaseService:
         self.cache_prefix = f"{model.__tablename__}"
 
     def _build_cache_field(self, filters):
-        return f"{json.dumps(filters, sort_keys=True)}"
+        return f"{json.dumps(filters or {}, sort_keys=True)}"
 
     async def invalidate_cache(self, redis_client: RedisClient = None):
         if redis_client:
+            print(f"Invalidating cache for {self.cache_prefix}")
             await redis_client.delete(self.cache_prefix)
 
     async def get(
@@ -42,7 +44,10 @@ class BaseService:
 
         result = await session.execute(query)
         data = result.scalars().all()
-        await redis_client.hset(redis_key, field, data)
+        serialized_data = jsonable_encoder(data)
+
+        if redis_client:
+            await redis_client.hset(redis_key, field, serialized_data)
 
         return data
 
