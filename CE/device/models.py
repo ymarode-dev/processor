@@ -1,6 +1,7 @@
 from sqlmodel import Relationship, SQLModel, Field
 from datetime import datetime
-from typing import Optional
+from typing import Dict, Optional, Any
+from sqlalchemy import Column, JSON
 import uuid
 from room.models import Room
 
@@ -39,8 +40,10 @@ class Devices(SQLModel, table=True):
     WATT: int
     CML_CATEGORY: str
     CML_COMFORT: str
-    ACTIONS_PROPERTIES: str
-
+    ACTIONS_PROPERTIES: Dict[str, Any] = Field(
+        default_factory=dict,
+        sa_column=Column(JSON)
+    )
     CREATED_AT: datetime = Field(default_factory=datetime.utcnow)
     UPDATED_AT: datetime = Field(default_factory=datetime.utcnow)
 

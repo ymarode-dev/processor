@@ -19,13 +19,9 @@ init_logging()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    print('inside lifespan')
     await init_redis()
-    print('redis done')
     await init_databases()
-    print('databases done')
     await init_default_data()
-    print('default data done')
     await init_mqtt()
     print("Starting up...")
     yield

@@ -31,7 +31,7 @@ class DeviceRead(BaseModel):
     WATT: int
     CML_CATEGORY: str
     CML_COMFORT: str
-    ACTIONS_PROPERTIES: str
+    ACTIONS_PROPERTIES: dict
     CREATED_AT: datetime 
     UPDATED_AT: datetime 
 
@@ -66,7 +66,7 @@ class DeviceCreate(BaseModel):
     WATT: int
     CML_CATEGORY: str
     CML_COMFORT: str
-    ACTIONS_PROPERTIES: str
+    ACTIONS_PROPERTIES: dict
 
 
 class DeviceUpdate(BaseModel):
@@ -97,7 +97,6 @@ class DeviceUpdate(BaseModel):
     WATT: Optional[int] = None
     CML_CATEGORY: Optional[str] = None
     CML_COMFORT: Optional[str] = None
-    ACTIONS_PROPERTIES: Optional[str] = None
 
 class DeviceFilter(BaseModel):
     DEVICE_ID: Optional[str] = None
