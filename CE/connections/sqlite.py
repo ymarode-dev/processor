@@ -1,12 +1,32 @@
+import os
 from sqlmodel import SQLModel
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import event
 from typing import AsyncGenerator
-from config import settings
 
-core_engine = create_async_engine(settings.CORE_DATABASE_URL, echo=True)
-pc_engine = create_async_engine(settings.PC_DATABASE_URL, echo=True)
+hub_file = os.path.join("/CE/db/data", "serial")
+
+serial = "default_serial"
+with open(hub_file, "r") as f:
+    serial = f.read().strip()
+
+core_db_name = f"DBcoreStructure_{serial}.db"
+pc_db_name = f"DBpcStructure_{serial}.db"
+scene_db_name = f"DBsceneStructure_{serial}.db"
+aqi_db_name = f"DBaqiStructure_{serial}.db"
+
+CORE_DATABASE_URL = f"sqlite+aiosqlite:////CE/db/data/PRIM/sql/{core_db_name}"
+PC_DATABASE_URL = f"sqlite+aiosqlite:////CE/db/data/PRIM/sql/{pc_db_name}"
+SCENE_DATABASE_URL = f"sqlite+aiosqlite:////CE/db/data/PRIM/sql/{scene_db_name}"
+AQI_DATABASE_URL = f"sqlite+aiosqlite:////CE/db/data/PRIM/sql/{aqi_db_name}"
+
+
+core_engine = create_async_engine(CORE_DATABASE_URL, echo=True)
+pc_engine = create_async_engine(PC_DATABASE_URL, echo=True)
+scene_engine = create_async_engine(SCENE_DATABASE_URL, echo=True)
+aqi_engine = create_async_engine(AQI_DATABASE_URL, echo=True)
+
 
 @event.listens_for(core_engine.sync_engine, "connect")
 def enable_sqlite_fk_core(dbapi_connection, connection_record):
@@ -20,8 +40,23 @@ def enable_sqlite_fk_pc(dbapi_connection, connection_record):
     cursor.execute("PRAGMA foreign_keys=ON")
     cursor.close()
 
+@event.listens_for(scene_engine.sync_engine, "connect")
+def enable_sqlite_fk_scene(dbapi_connection, connection_record):
+    cursor = dbapi_connection.cursor()
+    cursor.execute("PRAGMA foreign_keys=ON")
+    cursor.close()
+
+@event.listens_for(aqi_engine.sync_engine, "connect")
+def enable_sqlite_fk_aqi(dbapi_connection, connection_record):
+    cursor = dbapi_connection.cursor()
+    cursor.execute("PRAGMA foreign_keys=ON")
+    cursor.close()
+
+
 core_session_maker = sessionmaker(core_engine, class_=AsyncSession, expire_on_commit=False)
 pc_session_maker = sessionmaker(pc_engine, class_=AsyncSession, expire_on_commit=False)
+scene_session_maker = sessionmaker(scene_engine, class_=AsyncSession, expire_on_commit=False)
+aqi_session_maker = sessionmaker(aqi_engine, class_=AsyncSession, expire_on_commit=False)
 
 async def init_core_db() -> None:
     async with core_engine.begin() as conn:
@@ -33,6 +68,16 @@ async def init_pc_db() -> None:
         from models import pc
         await conn.run_sync(SQLModel.metadata.create_all)
 
+async def init_scene_db() -> None:
+    async with scene_engine.begin() as conn:
+        from models import scene
+        await conn.run_sync(SQLModel.metadata.create_all)
+
+async def init_aqi_db() -> None:
+    async with aqi_engine.begin() as conn:
+        from models import aqi
+        await conn.run_sync(SQLModel.metadata.create_all)
+
 async def get_core_session() -> AsyncGenerator[AsyncSession, None]:
     async with core_session_maker() as session:
         yield session
@@ -40,3 +85,17 @@ async def get_core_session() -> AsyncGenerator[AsyncSession, None]:
 async def get_pc_session() -> AsyncGenerator[AsyncSession, None]:
     async with pc_session_maker() as session:
         yield session
+
+async def get_scene_session() -> AsyncGenerator[AsyncSession, None]:
+    async with scene_session_maker() as session:
+        yield session
+
+async def get_aqi_session() -> AsyncGenerator[AsyncSession, None]:
+    async with aqi_session_maker() as session:
+        yield session
+
+async def init_databases():
+    await init_core_db()
+    await init_pc_db()
+    await init_scene_db()
+    await init_aqi_db()

@@ -28,40 +28,48 @@ class BaseService:
         filters: Dict = None,
         redis_client: RedisClient = None
     ) -> List[Any]:
+        try:
 
-        if redis_client:
-            redis_key = self.cache_prefix
-            field = self._build_cache_field(filters)
+            if redis_client:
+                redis_key = self.cache_prefix
+                field = self._build_cache_field(filters)
 
-            cached = await redis_client.hget(redis_key, field)
-            if cached:
-                cache_data = json.loads(cached)
-                print(f"Cache hit for {redis_key}:{field} === {cache_data}")
-                return cache_data
+                cached = await redis_client.hget(redis_key, field)
+                if cached:
+                    cache_data = json.loads(cached)
+                    print(f"Cache hit for {redis_key}:{field} === {cache_data}")
+                    return cache_data
 
-        query = select(self.model)
-        query = self._apply_filters(query, filters)
+            query = select(self.model)
+            query = self._apply_filters(query, filters)
 
-        result = await session.execute(query)
-        data = result.scalars().all()
-        serialized_data = jsonable_encoder(data)
+            result = await session.execute(query)
+            data = result.scalars().all()
+            serialized_data = jsonable_encoder(data)
 
-        if redis_client:
-            await redis_client.hset(redis_key, field, serialized_data)
+            if redis_client:
+                await redis_client.hset(redis_key, field, serialized_data)
 
-        return data
+            return data
+        except Exception as e:
+            await session.rollback()
+            raise HTTPException(status_code=400, detail=str(e))
 
     async def create(self, session: AsyncSession, data: List[Dict], redis_client: RedisClient = None) -> List[Any]:
-        objs = [self.model(**item) for item in data]
+        try:
+            objs = [self.model(**item) for item in data]
 
-        session.add_all(objs)
-        await session.commit()
+            session.add_all(objs)
+            await session.commit()
 
-        for obj in objs:
-            await session.refresh(obj)
+            for obj in objs:
+                await session.refresh(obj)
 
-        await self.invalidate_cache(redis_client)
-        return objs
+            await self.invalidate_cache(redis_client)
+            return objs
+        except Exception as e:
+            await session.rollback()
+            raise HTTPException(status_code=400, detail=str(e))
 
     async def update(
         self,
@@ -70,27 +78,35 @@ class BaseService:
         values: Dict,
         redis_client: RedisClient = None
     ) -> int:
+        try:
 
-        query = update(self.model)
-        query = self._apply_filters(query, filters)
+            query = update(self.model)
+            query = self._apply_filters(query, filters)
 
-        query = query.values(**values, UPDATED_AT=datetime.utcnow())
+            query = query.values(**values, UPDATED_AT=datetime.utcnow())
 
-        result = await session.execute(query)
-        await session.commit()
+            result = await session.execute(query)
+            await session.commit()
 
-        await self.invalidate_cache(redis_client)
-        return result.rowcount
+            await self.invalidate_cache(redis_client)
+            return result.rowcount
+        except Exception as e:
+            await session.rollback()
+            raise HTTPException(status_code=400, detail=str(e))
 
     async def delete(self, session: AsyncSession, filters: Dict, redis_client: RedisClient = None) -> int:
-        query = delete(self.model)
-        query = self._apply_filters(query, filters)
+        try:
+            query = delete(self.model)
+            query = self._apply_filters(query, filters)
 
-        result = await session.execute(query)
-        await session.commit()
+            result = await session.execute(query)
+            await session.commit()
 
-        await self.invalidate_cache(redis_client)
-        return result.rowcount
+            await self.invalidate_cache(redis_client)
+            return result.rowcount
+        except Exception as e:
+            await session.rollback()
+            raise HTTPException(status_code=400, detail=str(e))
 
     def cast_value(self, field: str, value):
         try:
@@ -102,12 +118,10 @@ class BaseService:
 
             return self.cast_single_value(column_type, field, value)
 
-        except HTTPException:
-            raise
-        except Exception:
+        except Exception as e:
             raise HTTPException(
                 status_code=400,
-                detail=f"Invalid value for field '{field}': {value}"
+                detail=f"Invalid value for field '{field}': {value} ({str(e)})"
             )
 
 
@@ -137,10 +151,10 @@ class BaseService:
 
             return value
 
-        except Exception:
+        except Exception as e:
             raise HTTPException(
                 status_code=400,
-                detail=f"Invalid value for field '{field}': {value}"
+                detail=f"Invalid value for field '{field}': {value} ({str(e)})"
             )
 
     def _apply_filters(self, query, filters: dict):

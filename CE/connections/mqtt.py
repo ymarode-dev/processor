@@ -6,6 +6,7 @@ from typing import List
 from datetime import datetime
 from config import settings
 from mqtt_invoker import MqttInvoker
+from .constants import HUB_MQTT_TOPICS, CONTROL_MQTT_TOPICS
 
 class MqttClient:
     _logger = logging.getLogger("MqttClient")
@@ -16,7 +17,7 @@ class MqttClient:
         port: int,
         username: str = None,
         password: str = None,
-        client_id: str = "MqttClient",
+        client_id: str = "ProcessorMqttClient",
         topics: List[str] = None,
     ):
         self.broker = broker
@@ -154,9 +155,7 @@ async def init_mqtt():
         username=settings.MQTT_USERNAME,
         password=settings.MQTT_PASSWORD,
         client_id="edgeProcessorHub",
-        topics=[
-            ("processor/health/hub", 1),
-        ],
+        topics=HUB_MQTT_TOPICS,
     )
 
     control = MqttClient(
@@ -165,9 +164,7 @@ async def init_mqtt():
         username=settings.MQTT_USERNAME,
         password=settings.MQTT_PASSWORD,
         client_id="edgeProcessorControl",
-        topics=[
-            ("processor/health/control", 1),
-            ],
+        topics=CONTROL_MQTT_TOPICS,
     )
 
     MqttClientRegistry.set_hub(hub)

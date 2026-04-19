@@ -2,8 +2,6 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    CORE_DATABASE_URL: str = "sqlite+aiosqlite:////CE/db/data/sql/core.db"
-    PC_DATABASE_URL: str = "sqlite+aiosqlite:////CE/db/data/sql/pc.db"
     REDIS_HOST: str = "127.0.0.1"
     REDIS_PORT: int = 6379
     # REDIS_PASSWORD: str

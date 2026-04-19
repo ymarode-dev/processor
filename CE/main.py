@@ -7,13 +7,13 @@ from location.routes import location_router
 from floor.routes import floor_router
 from room.routes import room_router
 from device.routes import device_router
-from connections.sqlite import init_core_db, init_pc_db
+from connections.sqlite import init_databases
 from connections.mqtt import init_mqtt
 from default_insertion import init_default_data
 from logger.hub_logging import init_logging
 
 version = 'v1'
-os.makedirs("/CE/db/data/sql", exist_ok=True)
+os.makedirs("/CE/db/data/PRIM/sql", exist_ok=True)
 
 init_logging()
 
@@ -22,10 +22,8 @@ async def lifespan(app: FastAPI):
     print('inside lifespan')
     await init_redis()
     print('redis done')
-    await init_core_db()
-    print('core db done')
-    await init_pc_db()
-    print('pc db done')
+    await init_databases()
+    print('databases done')
     await init_default_data()
     print('default data done')
     await init_mqtt()

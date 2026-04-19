@@ -4,7 +4,8 @@ from fastapi.exceptions import HTTPException
 from .schemas import DeviceRead, DeviceCreate, DeviceUpdate, DeviceFilter
 from connections.sqlite import get_core_session
 from .service import DeviceService   
-from connections.redis import RedisClientRegistry
+from connections.redis import RedisClientRegistry, RedisClient
+from connections.mqtt import MqttClientRegistry, MqttClient
 from typing import List
 
 device_router = APIRouter()
@@ -14,7 +15,7 @@ device_service = DeviceService()
 async def get_devices(
     filters: DeviceFilter = Depends(),
     session: AsyncSession = Depends(get_core_session),
-    redis_client = Depends(RedisClientRegistry.get_db_client)
+    redis_client: RedisClient = Depends(RedisClientRegistry.get_db_client)
 ) -> List[DeviceRead]:
     
     filter_dict = filters.model_dump(exclude_none=True)
@@ -25,10 +26,11 @@ async def get_devices(
 async def create_device(
     device_data: List[DeviceCreate], 
     session: AsyncSession = Depends(get_core_session),
-    redis_client = Depends(RedisClientRegistry.get_db_client)
+    redis_client: RedisClient = Depends(RedisClientRegistry.get_db_client),
+    hub_mqtt_client: MqttClient = Depends(MqttClientRegistry.get_hub)
     ) -> List[DeviceRead]:
 
-    new_devices = await device_service.create_device(session, device_data, redis_client)
+    new_devices = await device_service.create_device(session, device_data, redis_client, hub_mqtt_client)
     return new_devices
 
 
@@ -37,11 +39,12 @@ async def update_device(
     device_data: DeviceUpdate, 
     filters: DeviceFilter = Depends(), 
     session: AsyncSession = Depends(get_core_session),
-    redis_client = Depends(RedisClientRegistry.get_db_client)
+    redis_client = Depends(RedisClientRegistry.get_db_client),
+    hub_mqtt_client: MqttClient = Depends(MqttClientRegistry.get_hub)
     ) -> List[DeviceRead]:
 
     filter_dict = filters.model_dump(exclude_none=True)
-    updated_device = await device_service.update_device(session, filter_dict, device_data, redis_client)
+    updated_device = await device_service.update_device(session, filter_dict, device_data, redis_client, hub_mqtt_client)
     if not updated_device:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Device not found")
     return updated_device   
@@ -51,11 +54,12 @@ async def update_device(
 async def delete_device(
     filters: DeviceFilter = Depends(), 
     session: AsyncSession = Depends(get_core_session),
-    redis_client = Depends(RedisClientRegistry.get_db_client)
+    redis_client = Depends(RedisClientRegistry.get_db_client),
+    hub_mqtt_client: MqttClient = Depends(MqttClientRegistry.get_hub)
     ) -> List[DeviceRead]:
 
     filter_dict = filters.model_dump(exclude_none=True)
-    device = await device_service.delete_device(session, filter_dict, redis_client)
+    device = await device_service.delete_device(session, filter_dict, redis_client, hub_mqtt_client)
     if not device:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Device not found")
     return device
